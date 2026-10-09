@@ -4,6 +4,7 @@ mod levels;
 mod lights;
 mod map;
 mod render;
+mod scoring;
 mod screenshot;
 mod sim;
 mod states;

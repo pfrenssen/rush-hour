@@ -73,10 +73,6 @@ impl Dir {
         }
     }
 
-    pub fn left(self) -> Dir {
-        self.right().opposite()
-    }
-
     pub fn axis(self) -> Axis {
         match self {
             Dir::N | Dir::S => Axis::NorthSouth,
@@ -311,17 +307,6 @@ impl Grid {
             self.height as f32 * TILE * 0.5 - (row as f32 + 0.5) * TILE,
         )
     }
-
-    /// Cell containing a world-space point, if any.
-    pub fn cell_at(&self, p: Vec2) -> Option<(usize, usize)> {
-        let col = ((p.x + self.width as f32 * TILE * 0.5) / TILE).floor();
-        let row = ((self.height as f32 * TILE * 0.5 - p.y) / TILE).floor();
-        if col < 0.0 || row < 0.0 || col >= self.width as f32 || row >= self.height as f32 {
-            None
-        } else {
-            Some((col as usize, row as usize))
-        }
-    }
 }
 
 #[cfg(test)]
@@ -387,11 +372,10 @@ mod tests {
     }
 
     #[test]
-    fn cell_centres_round_trip() {
+    fn cell_centres_are_relative_to_the_map_centre() {
         let g = Grid::parse(&["..|..", "--+--", "..|.."]).unwrap();
         let c = g.cell_center(2, 1);
         assert!(c.abs_diff_eq(Vec2::ZERO, 1e-5));
-        assert_eq!(g.cell_at(g.cell_center(4, 0)), Some((4, 0)));
-        assert_eq!(g.cell_at(Vec2::new(1000.0, 0.0)), None);
+        assert!(g.cell_center(4, 0).abs_diff_eq(Vec2::new(16.0, 8.0), 1e-5));
     }
 }

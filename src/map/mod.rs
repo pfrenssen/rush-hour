@@ -1,8 +1,5 @@
 //! The city map: ASCII parsing, lane graph and route finding.
 
-// Parts of the level data and lane graph are only consumed once vehicles drive.
-#![allow(dead_code)]
-
 pub mod geom;
 pub mod graph;
 pub mod grid;
@@ -18,12 +15,6 @@ use grid::Grid;
 /// Index into [`LEVELS`] of the level to play.
 #[derive(Resource, Debug, Clone, Copy, Default)]
 pub struct CurrentLevel(pub usize);
-
-impl CurrentLevel {
-    pub fn def(&self) -> &'static LevelDef {
-        &LEVELS[self.0]
-    }
-}
 
 /// The loaded level.
 #[derive(Resource)]

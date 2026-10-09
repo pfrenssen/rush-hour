@@ -22,7 +22,6 @@ pub struct KindParams {
     /// Seconds of standing still before patience runs out.
     pub patience: f32,
     /// Points for a delivery at full speed, before the combo multiplier.
-    #[allow(dead_code)]
     pub points: u32,
 }
 

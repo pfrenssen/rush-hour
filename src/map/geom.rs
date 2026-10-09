@@ -50,23 +50,7 @@ impl Geom {
         }
     }
 
-    /// Unit direction of travel at distance `s`.
-    pub fn tangent_at(&self, s: f32) -> Vec2 {
-        match *self {
-            Geom::Line { a, b } => (b - a).normalize_or_zero(),
-            Geom::Arc { start, sweep, .. } => {
-                let t = (s / self.length()).clamp(0.0, 1.0);
-                let angle = start + sweep * t;
-                let radial = Vec2::new(angle.cos(), angle.sin());
-                if sweep >= 0.0 {
-                    radial.perp()
-                } else {
-                    -radial.perp()
-                }
-            }
-        }
-    }
-
+    #[cfg(test)]
     pub fn start(&self) -> Vec2 {
         self.point_at(0.0)
     }
@@ -91,14 +75,13 @@ mod tests {
     use std::f32::consts::FRAC_PI_2;
 
     #[test]
-    fn line_points_and_tangent() {
+    fn line_points() {
         let g = Geom::Line {
             a: Vec2::ZERO,
             b: Vec2::new(10.0, 0.0),
         };
         assert_eq!(g.length(), 10.0);
         assert!(g.point_at(2.5).abs_diff_eq(Vec2::new(2.5, 0.0), 1e-5));
-        assert!(g.tangent_at(1.0).abs_diff_eq(Vec2::X, 1e-5));
     }
 
     #[test]
@@ -112,11 +95,10 @@ mod tests {
         assert!((g.length() - std::f32::consts::PI).abs() < 1e-5);
         assert!(g.start().abs_diff_eq(Vec2::new(2.0, 0.0), 1e-5));
         assert!(g.end().abs_diff_eq(Vec2::new(0.0, 2.0), 1e-5));
-        assert!(g.tangent_at(0.0).abs_diff_eq(Vec2::Y, 1e-5));
     }
 
     #[test]
-    fn arc_clockwise_tangent_points_along_travel() {
+    fn arc_clockwise_quarter() {
         let g = Geom::Arc {
             center: Vec2::ZERO,
             radius: 2.0,
@@ -125,7 +107,5 @@ mod tests {
         };
         assert!(g.start().abs_diff_eq(Vec2::new(-2.0, 0.0), 1e-5));
         assert!(g.end().abs_diff_eq(Vec2::new(0.0, 2.0), 1e-5));
-        assert!(g.tangent_at(0.0).abs_diff_eq(Vec2::Y, 1e-5));
-        assert!(g.tangent_at(g.length()).abs_diff_eq(Vec2::X, 1e-5));
     }
 }

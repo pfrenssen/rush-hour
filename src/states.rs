@@ -19,6 +19,8 @@ pub enum GamePhase {
     #[default]
     Running,
     Paused,
+    LevelComplete,
+    GameOver,
 }
 
 /// Ordering of the systems that set up a level when entering `AppState::InGame`.

@@ -11,7 +11,7 @@ use std::f32::consts::FRAC_PI_2;
 use bevy::math::Vec2;
 
 use super::geom::Geom;
-use super::grid::{Axis, Dir, Grid, TILE};
+use super::grid::{Dir, Grid, TILE};
 
 pub type LaneId = usize;
 pub type NodeId = usize;
@@ -329,22 +329,19 @@ impl LaneGraph {
         }
     }
 
+    #[cfg(test)]
     pub fn signal_count(&self) -> usize {
         self.nodes.iter().filter(|n| n.is_signal()).count()
     }
 
     /// The incoming road lane at `node` whose vehicles travel in `dir`.
+    #[cfg(test)]
     pub fn approach(&self, node: NodeId, dir: Dir) -> Option<LaneId> {
         self.nodes[node]
             .incoming
             .iter()
             .copied()
             .find(|&l| self.lanes[l].dir() == Some(dir))
-    }
-
-    /// Axis of travel for vehicles queued on an incoming road lane.
-    pub fn lane_axis(&self, lane: LaneId) -> Option<Axis> {
-        self.lanes[lane].dir().map(Dir::axis)
     }
 }
 

@@ -15,10 +15,7 @@ use kind::VehicleKind;
 use spawn::{Spawner, spawn_rate};
 use traffic::Vehicle;
 
-// The events below are consumed by scoring, which arrives in a later commit.
-
 /// A vehicle reached its exit.
-#[allow(dead_code)]
 #[derive(Message, Clone, Debug)]
 pub struct Delivered {
     pub kind: VehicleKind,
@@ -28,14 +25,12 @@ pub struct Delivered {
 }
 
 /// A vehicle ran out of patience.
-#[allow(dead_code)]
 #[derive(Message, Clone, Debug)]
 pub struct FedUp {
     pub pos: Vec2,
 }
 
 /// A spawn point stayed blocked for too long.
-#[allow(dead_code)]
 #[derive(Message, Clone, Debug)]
 pub struct SpawnBlocked {
     pub terminal: TerminalId,

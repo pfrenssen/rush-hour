@@ -1,8 +1,5 @@
 //! Hand-made levels. See `map::grid` for the ASCII legend.
 
-// Parts of the level data and lane graph are only consumed once vehicles drive.
-#![allow(dead_code)]
-
 /// Relative spawn weights of each vehicle type.
 #[derive(Clone, Copy, Debug)]
 pub struct Mix {

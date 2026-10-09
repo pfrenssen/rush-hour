@@ -1,15 +1,18 @@
 //! Menus, overlays and the in-game HUD.
 
+pub mod hud;
+
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
 use bevy::ui::Pressed;
 use bevy::ui_widgets::{Activate, Button};
 
-use crate::states::AppState;
+use crate::states::{AppState, LevelLoad};
 
 pub const TEXT: Color = Color::srgb(0.93, 0.94, 0.96);
 pub const TEXT_DIM: Color = Color::srgb(0.62, 0.66, 0.72);
 pub const ACCENT: Color = Color::srgb(1.0, 0.76, 0.24);
+pub const DANGER: Color = Color::srgb(1.0, 0.45, 0.40);
 const BUTTON_BG: Color = Color::srgb(0.16, 0.18, 0.22);
 const BUTTON_HOVER: Color = Color::srgb(0.24, 0.27, 0.33);
 const BUTTON_PRESS: Color = Color::srgb(0.32, 0.36, 0.44);
@@ -19,8 +22,15 @@ pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Menu), spawn_menu)
-            .add_systems(OnEnter(AppState::InGame), spawn_placeholder)
-            .add_systems(Update, style_buttons);
+            .add_systems(
+                OnEnter(AppState::InGame),
+                (hud::spawn_hud, hud::spawn_intro).in_set(LevelLoad::Visuals),
+            )
+            .add_systems(Update, style_buttons)
+            .add_systems(
+                Update,
+                (hud::update_hud, hud::fade_intro).run_if(in_state(AppState::InGame)),
+            );
     }
 }
 
@@ -46,6 +56,23 @@ pub fn button(label: &str, width: f32) -> impl Bundle {
             },
             TextColor(TEXT),
         )],
+    )
+}
+
+/// A compact button without a label; the caller adds the content.
+pub fn small_button(width: f32) -> impl Bundle {
+    (
+        Button,
+        Hovered::default(),
+        Node {
+            width: px(width),
+            height: px(38),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            border_radius: BorderRadius::all(px(8)),
+            ..default()
+        },
+        BackgroundColor(BUTTON_BG),
     )
 }
 
@@ -99,20 +126,4 @@ fn spawn_menu(mut commands: Commands) {
                 },
             );
         });
-}
-
-fn spawn_placeholder(mut commands: Commands) {
-    commands.spawn((
-        DespawnOnExit(AppState::InGame),
-        Text::new(
-            "Click a junction to switch its lights - P pauses, M in pause returns to the menu",
-        ),
-        TextColor(TEXT_DIM),
-        Node {
-            position_type: PositionType::Absolute,
-            top: px(16),
-            left: px(16),
-            ..default()
-        },
-    ));
 }

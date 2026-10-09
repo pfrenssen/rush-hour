@@ -31,6 +31,22 @@ pub struct SimConfig {
 #[derive(Resource)]
 pub struct SimRng(pub fastrand::Rng);
 
+/// Simulation speed multiplier (1x or 2x), applied to virtual time.
+#[derive(Resource, Clone, Copy, Debug, PartialEq)]
+pub struct SimSpeed(pub f32);
+
+impl Default for SimSpeed {
+    fn default() -> Self {
+        SimSpeed(1.0)
+    }
+}
+
+impl SimSpeed {
+    pub fn toggle(&mut self) {
+        self.0 = if self.0 > 1.5 { 1.0 } else { 2.0 };
+    }
+}
+
 /// Counts level starts so that restarts get fresh traffic while staying reproducible.
 #[derive(Resource, Default)]
 pub struct Attempts(pub u64);
@@ -45,6 +61,8 @@ impl Plugin for SimPlugin {
             .insert_resource(SimConfig { seed: self.seed })
             .insert_resource(SimRng(fastrand::Rng::with_seed(self.seed)))
             .init_resource::<Attempts>()
+            .init_resource::<SimSpeed>()
+            .add_systems(Update, apply_speed)
             .configure_sets(
                 FixedUpdate,
                 (
@@ -62,6 +80,7 @@ impl Plugin for SimPlugin {
                 crate::map::MapPlugin,
                 crate::lights::LightsPlugin,
                 crate::vehicles::VehiclesPlugin,
+                crate::scoring::ScoringPlugin,
             ));
     }
 }
@@ -78,4 +97,10 @@ fn reseed(
         .wrapping_add(attempts.0 * 0x85EB_CA6B);
     attempts.0 += 1;
     rng.0 = fastrand::Rng::with_seed(seed);
+}
+
+fn apply_speed(speed: Res<SimSpeed>, mut time: ResMut<Time<Virtual>>) {
+    if speed.is_changed() {
+        time.set_relative_speed(speed.0);
+    }
 }

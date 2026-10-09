@@ -7,6 +7,7 @@ use crate::lights::SwitchRequest;
 use crate::map::CityMap;
 use crate::map::graph::{HALF, NodeId};
 use crate::render::camera::MainCamera;
+use crate::sim::SimSpeed;
 use crate::states::{AppState, GamePhase};
 
 /// How far outside its box a junction still reacts to the mouse.
@@ -75,6 +76,7 @@ fn clear_hover(mut hovered: ResMut<HoveredNode>) {
 
 fn pause_keys(
     keys: Res<ButtonInput<KeyCode>>,
+    mut speed: ResMut<SimSpeed>,
     phase: Res<State<GamePhase>>,
     mut next_phase: ResMut<NextState<GamePhase>>,
     mut next: ResMut<NextState<AppState>>,
@@ -83,7 +85,11 @@ fn pause_keys(
         match phase.get() {
             GamePhase::Running => next_phase.set(GamePhase::Paused),
             GamePhase::Paused => next_phase.set(GamePhase::Running),
+            GamePhase::LevelComplete | GamePhase::GameOver => {}
         }
+    }
+    if keys.any_just_pressed([KeyCode::KeyF, KeyCode::Tab]) {
+        speed.toggle();
     }
     if *phase.get() == GamePhase::Paused && keys.just_pressed(KeyCode::KeyM) {
         next.set(AppState::Menu);

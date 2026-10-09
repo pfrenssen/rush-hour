@@ -1,6 +1,7 @@
 //! Everything that draws the world: camera, map, vehicles, lights and effects.
 
 pub mod camera;
+pub mod effects;
 pub mod lights;
 pub mod map;
 pub mod shapes;
@@ -21,6 +22,7 @@ pub mod z {
     pub const LIGHTS: f32 = 6.0;
     pub const BUBBLES: f32 = 7.0;
     pub const OVERLAY: f32 = 8.0;
+    pub const POPUPS: f32 = 9.0;
 }
 
 pub mod palette {
@@ -61,7 +63,12 @@ impl Plugin for GameRenderPlugin {
             .add_systems(Startup, camera::spawn_camera)
             .add_systems(
                 OnEnter(AppState::InGame),
-                (map::spawn_map, lights::spawn_lights).in_set(LevelLoad::Visuals),
+                (
+                    map::spawn_map,
+                    lights::spawn_lights,
+                    effects::spawn_blocked_markers,
+                )
+                    .in_set(LevelLoad::Visuals),
             )
             .add_systems(
                 Update,
@@ -69,6 +76,8 @@ impl Plugin for GameRenderPlugin {
                     lights::update_lamps,
                     lights::update_hover_ring,
                     (vehicles::dress_vehicles, vehicles::animate_vehicles).chain(),
+                    (effects::spawn_feedback, effects::animate_feedback).chain(),
+                    effects::update_blocked_markers,
                 )
                     .run_if(in_state(AppState::InGame)),
             )

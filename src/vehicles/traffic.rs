@@ -62,8 +62,6 @@ pub struct Vehicle {
     /// Desired speed (the type's cruising speed with a little personal variation).
     pub v0: f32,
     pub route: Arc<[LaneId]>,
-    #[allow(dead_code)]
-    pub entry: TerminalId,
     pub exit: TerminalId,
     /// Index into `route` of the lane holding the front bumper.
     pub idx: usize,
@@ -94,7 +92,6 @@ impl Vehicle {
         id: u32,
         kind: VehicleKind,
         route: Arc<[LaneId]>,
-        entry: TerminalId,
         exit: TerminalId,
         graph: &LaneGraph,
         speed_factor: f32,
@@ -112,7 +109,6 @@ impl Vehicle {
             params,
             v0,
             route,
-            entry,
             exit,
             idx: 0,
             s: params.length,
@@ -699,7 +695,7 @@ pub mod tests {
         let a = terminal(g, from);
         let b = terminal(g, to);
         let route = shortest_route(g, g.terminals[a].entry, g.terminals[b].exit).unwrap();
-        Vehicle::new(id, kind, route.into(), a, b, g, 1.0, 0)
+        Vehicle::new(id, kind, route.into(), b, g, 1.0, 0)
     }
 
     pub const DT: f32 = 1.0 / 60.0;

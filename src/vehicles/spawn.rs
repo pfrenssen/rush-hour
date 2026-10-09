@@ -104,7 +104,6 @@ impl Spawner {
                     self.next_id,
                     p.kind,
                     route,
-                    t,
                     p.exit,
                     graph,
                     0.92 + 0.16 * rng.f32(),
@@ -164,11 +163,13 @@ mod tests {
         assert!((vehicles.len() as f32 - expected).abs() < expected * 0.35);
         // Every vehicle starts on its entry lane and leaves on another side.
         for v in &vehicles {
-            assert_eq!(v.route[0], map.graph.terminals[v.entry].entry);
-            assert_ne!(
-                map.graph.terminals[v.entry].side,
-                map.graph.terminals[v.exit].side
-            );
+            let entry = map
+                .graph
+                .terminals
+                .iter()
+                .find(|t| t.entry == v.route[0])
+                .expect("starts on an entry lane");
+            assert_ne!(entry.side, map.graph.terminals[v.exit].side);
         }
     }
 
@@ -190,7 +191,6 @@ mod tests {
                     1000 + t as u32,
                     VehicleKind::Car,
                     route,
-                    t,
                     t,
                     &map.graph,
                     1.0,
