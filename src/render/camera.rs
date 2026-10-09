@@ -1,6 +1,7 @@
 //! Camera that fits the whole map below the HUD and follows window resizes.
 
-use bevy::camera::ScalingMode;
+use bevy::camera::{Hdr, ScalingMode};
+use bevy::post_process::bloom::{Bloom, BloomPrefilter};
 use bevy::prelude::*;
 
 use crate::map::CityMap;
@@ -14,7 +15,20 @@ const MARGIN: f32 = 12.0;
 pub struct MainCamera;
 
 pub fn spawn_camera(mut commands: Commands) {
-    commands.spawn((Camera2d, MainCamera));
+    commands.spawn((
+        Camera2d,
+        MainCamera,
+        Hdr,
+        // Only HDR colours (lamps, brake lights) bloom, the flat map stays crisp.
+        Bloom {
+            intensity: 0.22,
+            prefilter: BloomPrefilter {
+                threshold: 1.0,
+                threshold_softness: 0.3,
+            },
+            ..Bloom::NATURAL
+        },
+    ));
 }
 
 pub fn fit_camera(

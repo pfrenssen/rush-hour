@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy::ui::Pressed;
 use bevy::ui_widgets::{Activate, Button};
 
-use crate::states::{AppState, GamePhase};
+use crate::states::AppState;
 
 pub const TEXT: Color = Color::srgb(0.93, 0.94, 0.96);
 pub const TEXT_DIM: Color = Color::srgb(0.62, 0.66, 0.72);
@@ -20,8 +20,7 @@ impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Menu), spawn_menu)
             .add_systems(OnEnter(AppState::InGame), spawn_placeholder)
-            .add_systems(Update, style_buttons)
-            .add_systems(Update, back_to_menu.run_if(in_state(AppState::InGame)));
+            .add_systems(Update, style_buttons);
     }
 }
 
@@ -105,7 +104,9 @@ fn spawn_menu(mut commands: Commands) {
 fn spawn_placeholder(mut commands: Commands) {
     commands.spawn((
         DespawnOnExit(AppState::InGame),
-        Text::new("Level goes here - Esc returns to the menu"),
+        Text::new(
+            "Click a junction to switch its lights - P pauses, M in pause returns to the menu",
+        ),
         TextColor(TEXT_DIM),
         Node {
             position_type: PositionType::Absolute,
@@ -114,21 +115,4 @@ fn spawn_placeholder(mut commands: Commands) {
             ..default()
         },
     ));
-}
-
-fn back_to_menu(
-    keys: Res<ButtonInput<KeyCode>>,
-    phase: Res<State<GamePhase>>,
-    mut next_phase: ResMut<NextState<GamePhase>>,
-    mut next: ResMut<NextState<AppState>>,
-) {
-    if keys.just_pressed(KeyCode::Escape) {
-        next.set(AppState::Menu);
-    }
-    if keys.just_pressed(KeyCode::KeyP) {
-        next_phase.set(match phase.get() {
-            GamePhase::Running => GamePhase::Paused,
-            GamePhase::Paused => GamePhase::Running,
-        });
-    }
 }

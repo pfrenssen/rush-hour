@@ -1,8 +1,11 @@
 mod cli;
+mod input;
 mod levels;
+mod lights;
 mod map;
 mod render;
 mod screenshot;
+mod sim;
 mod states;
 mod ui;
 
@@ -48,7 +51,8 @@ fn main() {
     }))
     .add_plugins((
         states::GameStatesPlugin,
-        map::MapPlugin,
+        sim::SimPlugin { seed: 1 },
+        input::InputPlugin,
         render::GameRenderPlugin,
         ui::GameUiPlugin,
     ));
