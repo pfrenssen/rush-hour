@@ -27,6 +27,89 @@ fn text(s: impl Into<String>, size: f32, color: Color) -> impl Bundle {
     )
 }
 
+/// One lamp of the animated traffic light next to the title.
+#[derive(Component)]
+pub struct EmblemLamp(usize);
+
+const LAMP_COLORS: [Color; 3] = [
+    Color::srgb(0.98, 0.30, 0.26),
+    Color::srgb(1.0, 0.74, 0.20),
+    Color::srgb(0.30, 0.90, 0.48),
+];
+
+fn emblem() -> impl Bundle {
+    (
+        Node {
+            column_gap: px(12),
+            padding: UiRect::axes(px(16), px(11)),
+            border_radius: BorderRadius::all(px(26)),
+            ..default()
+        },
+        BackgroundColor(Color::srgb(0.08, 0.09, 0.11)),
+        BoxShadow::new(
+            Color::srgba(0.0, 0.0, 0.0, 0.6),
+            px(0),
+            px(6),
+            px(0),
+            px(14),
+        ),
+        Children::spawn(SpawnIter((0..3).map(|i| {
+            (
+                EmblemLamp(i),
+                Node {
+                    width: px(30),
+                    height: px(30),
+                    border_radius: BorderRadius::MAX,
+                    ..default()
+                },
+                BackgroundColor(dim(LAMP_COLORS[i])),
+                BoxShadow::default(),
+            )
+        }))),
+    )
+}
+
+fn dim(color: Color) -> Color {
+    color.mix(&Color::srgb(0.10, 0.10, 0.12), 0.72)
+}
+
+/// Cycle the emblem like a real light: green, amber, red.
+pub fn animate_emblem(
+    time: Res<Time<Real>>,
+    mut lamps: Query<(&EmblemLamp, &mut BackgroundColor, &mut BoxShadow)>,
+) {
+    let t = time.elapsed_secs() % 6.0;
+    let lit = if t < 2.6 {
+        2
+    } else if t < 3.6 {
+        1
+    } else {
+        0
+    };
+    for (lamp, mut bg, mut shadow) in &mut lamps {
+        let on = lamp.0 == lit;
+        let color = if on {
+            LAMP_COLORS[lamp.0]
+        } else {
+            dim(LAMP_COLORS[lamp.0])
+        };
+        if bg.0 != color {
+            bg.0 = color;
+            *shadow = if on {
+                BoxShadow::new(
+                    LAMP_COLORS[lamp.0].with_alpha(0.8),
+                    px(0),
+                    px(0),
+                    px(2),
+                    px(16),
+                )
+            } else {
+                BoxShadow::default()
+            };
+        }
+    }
+}
+
 pub fn spawn_menu(mut commands: Commands, game: Res<Game>) {
     commands
         .spawn((
@@ -42,6 +125,7 @@ pub fn spawn_menu(mut commands: Commands, game: Res<Game>) {
             },
         ))
         .with_children(|root| {
+            root.spawn(emblem());
             root.spawn(text("RUSH HOUR", 76.0, ACCENT));
             root.spawn(text(
                 "Keep the city moving. You only control the traffic lights.",

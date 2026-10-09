@@ -362,6 +362,21 @@ fn pose_transform(v: &Vehicle, map: &CityMap) -> Transform {
     };
     Transform::from_translation(center.extend(base_z(v)))
         .with_rotation(Quat::from_rotation_z(angle))
+        .with_scale(Vec3::splat(edge_scale(v, map)))
+}
+
+/// Vehicles grow in as they enter the map and shrink away as they leave it.
+fn edge_scale(v: &Vehicle, map: &CityMap) -> f32 {
+    let appear = (v.age / 0.4).min(1.0);
+    let last = v.idx + 1 == v.route.len();
+    let left = if last {
+        ((map.graph.lanes[v.lane()].length - v.s) / 5.0).min(1.0)
+    } else {
+        1.0
+    };
+    let t = appear.min(left).max(0.0);
+    // Ease out so the motion settles softly.
+    1.0 - (1.0 - t).powi(3)
 }
 
 pub fn animate_vehicles(

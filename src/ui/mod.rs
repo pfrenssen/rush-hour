@@ -38,6 +38,10 @@ impl Plugin for GameUiPlugin {
             .add_systems(Update, style_buttons)
             .add_systems(
                 Update,
+                menu::animate_emblem.run_if(in_state(AppState::Menu)),
+            )
+            .add_systems(
+                Update,
                 (hud::update_hud, hud::fade_intro).run_if(in_state(AppState::InGame)),
             );
     }
