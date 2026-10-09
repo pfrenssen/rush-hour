@@ -6,6 +6,7 @@ pub mod traffic;
 
 use bevy::prelude::*;
 
+use crate::lights::Signals;
 use crate::map::CityMap;
 use crate::map::graph::TerminalId;
 use crate::sim::{SimRng, SimSet};
@@ -47,6 +48,8 @@ pub struct TrafficStats {
     pub delivered: u32,
     /// Longest total standing time of any single vehicle.
     pub max_wait: f32,
+    /// Ticks in which two vehicle bodies overlapped (summed over pairs). Must stay zero.
+    pub overlaps: u32,
 }
 
 pub struct VehiclesPlugin;
@@ -105,6 +108,7 @@ fn drive_vehicles(
     mut commands: Commands,
     time: Res<Time>,
     map: Res<CityMap>,
+    signals: Res<Signals>,
     mut cars: Query<(Entity, &mut Vehicle)>,
     mut stats: ResMut<TrafficStats>,
     mut delivered: MessageWriter<Delivered>,
@@ -114,11 +118,12 @@ fn drive_vehicles(
     items.sort_by_key(|(_, v)| v.id);
     let entities: Vec<Entity> = items.iter().map(|(e, _)| *e).collect();
     let mut refs: Vec<&mut Vehicle> = items.iter_mut().map(|(_, v)| &mut **v).collect();
-    let events = traffic::step(&map.graph, &mut refs, time.delta_secs());
+    let events = traffic::step(&map.graph, &signals.0, &mut refs, time.delta_secs());
 
     for v in &refs {
         stats.max_wait = stats.max_wait.max(v.waited);
     }
+    stats.overlaps += traffic::count_overlaps(&map.graph, &refs) as u32;
     for &i in &events.fed_up {
         let (front, rear) = refs[i].pose(&map.graph);
         fed_up.write(FedUp {
