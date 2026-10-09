@@ -58,7 +58,11 @@ impl Plugin for SimPlugin {
                     .run_if(in_state(GamePhase::Running)),
             )
             .add_systems(OnEnter(AppState::InGame), reseed.in_set(LevelLoad::Sim))
-            .add_plugins((crate::map::MapPlugin, crate::lights::LightsPlugin));
+            .add_plugins((
+                crate::map::MapPlugin,
+                crate::lights::LightsPlugin,
+                crate::vehicles::VehiclesPlugin,
+            ));
     }
 }
 

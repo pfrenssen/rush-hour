@@ -8,12 +8,13 @@ mod screenshot;
 mod sim;
 mod states;
 mod ui;
+mod vehicles;
 
 use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy::time::TimeUpdateStrategy;
-use bevy::window::WindowResolution;
+use bevy::window::{PresentMode, WindowResolution};
 
 use cli::{Mode, ParseOutcome};
 use states::AppState;
@@ -45,6 +46,12 @@ fn main() {
             title: "Rush Hour".into(),
             resolution,
             resizable: !screenshot,
+            // Screenshot runs render as fast as possible instead of waiting for vsync.
+            present_mode: if screenshot {
+                PresentMode::AutoNoVsync
+            } else {
+                PresentMode::AutoVsync
+            },
             ..default()
         }),
         ..default()

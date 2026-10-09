@@ -4,6 +4,7 @@ pub mod camera;
 pub mod lights;
 pub mod map;
 pub mod shapes;
+pub mod vehicles;
 
 use bevy::prelude::*;
 
@@ -15,7 +16,10 @@ pub mod z {
     pub const MARKINGS: f32 = 1.0;
     pub const SHADOWS: f32 = 2.0;
     pub const BUILDINGS: f32 = 3.0;
+    pub const VEHICLE_SHADOWS: f32 = 3.9;
+    pub const VEHICLES: f32 = 4.0;
     pub const LIGHTS: f32 = 6.0;
+    pub const BUBBLES: f32 = 7.0;
     pub const OVERLAY: f32 = 8.0;
 }
 
@@ -53,6 +57,7 @@ impl Plugin for GameRenderPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ClearColor(palette::BACKGROUND))
             .init_resource::<lights::LampMaterials>()
+            .init_resource::<vehicles::VehicleAssets>()
             .add_systems(Startup, camera::spawn_camera)
             .add_systems(
                 OnEnter(AppState::InGame),
@@ -60,7 +65,11 @@ impl Plugin for GameRenderPlugin {
             )
             .add_systems(
                 Update,
-                (lights::update_lamps, lights::update_hover_ring)
+                (
+                    lights::update_lamps,
+                    lights::update_hover_ring,
+                    (vehicles::dress_vehicles, vehicles::animate_vehicles).chain(),
+                )
                     .run_if(in_state(AppState::InGame)),
             )
             .add_systems(

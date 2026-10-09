@@ -1,0 +1,3 @@
+# Bevy systems routinely take many parameters and nested query types.
+too-many-arguments-threshold = 12
+type-complexity-threshold = 500
