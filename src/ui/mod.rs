@@ -1,18 +1,21 @@
 //! Menus, overlays and the in-game HUD.
 
 pub mod hud;
+pub mod menu;
+pub mod overlays;
 
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
 use bevy::ui::Pressed;
-use bevy::ui_widgets::{Activate, Button};
+use bevy::ui_widgets::Button;
 
-use crate::states::{AppState, LevelLoad};
+use crate::states::{AppState, GamePhase, LevelLoad};
 
 pub const TEXT: Color = Color::srgb(0.93, 0.94, 0.96);
 pub const TEXT_DIM: Color = Color::srgb(0.62, 0.66, 0.72);
 pub const ACCENT: Color = Color::srgb(1.0, 0.76, 0.24);
 pub const DANGER: Color = Color::srgb(1.0, 0.45, 0.40);
+pub const PANEL: Color = Color::srgba(0.09, 0.10, 0.13, 0.96);
 const BUTTON_BG: Color = Color::srgb(0.16, 0.18, 0.22);
 const BUTTON_HOVER: Color = Color::srgb(0.24, 0.27, 0.33);
 const BUTTON_PRESS: Color = Color::srgb(0.32, 0.36, 0.44);
@@ -21,7 +24,13 @@ pub struct GameUiPlugin;
 
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Menu), spawn_menu)
+        app.add_systems(OnEnter(AppState::Menu), menu::spawn_menu)
+            .add_systems(OnEnter(GamePhase::Paused), overlays::spawn_pause)
+            .add_systems(
+                OnEnter(GamePhase::LevelComplete),
+                overlays::spawn_level_complete,
+            )
+            .add_systems(OnEnter(GamePhase::GameOver), overlays::spawn_game_over)
             .add_systems(
                 OnEnter(AppState::InGame),
                 (hud::spawn_hud, hud::spawn_intro).in_set(LevelLoad::Visuals),
@@ -87,43 +96,4 @@ fn style_buttons(mut buttons: Query<(&Hovered, Has<Pressed>, &mut BackgroundColo
             bg.0 = color;
         }
     }
-}
-
-fn spawn_menu(mut commands: Commands) {
-    commands
-        .spawn((
-            DespawnOnExit(AppState::Menu),
-            Node {
-                width: percent(100),
-                height: percent(100),
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                row_gap: px(18),
-                ..default()
-            },
-        ))
-        .with_children(|root| {
-            root.spawn((
-                Text::new("RUSH HOUR"),
-                TextFont {
-                    font_size: FontSize::Px(72.0),
-                    ..default()
-                },
-                TextColor(ACCENT),
-            ));
-            root.spawn((
-                Text::new("Keep the city moving. You control the lights."),
-                TextFont {
-                    font_size: FontSize::Px(22.0),
-                    ..default()
-                },
-                TextColor(TEXT_DIM),
-            ));
-            root.spawn(button("Play", 220.0)).observe(
-                |_: On<Activate>, mut next: ResMut<NextState<AppState>>| {
-                    next.set(AppState::InGame);
-                },
-            );
-        });
 }

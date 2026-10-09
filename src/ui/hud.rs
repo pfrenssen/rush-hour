@@ -8,7 +8,7 @@ use crate::map::CityMap;
 use crate::render::camera::HUD_HEIGHT;
 use crate::scoring::{Game, LIVES};
 use crate::sim::SimSpeed;
-use crate::states::{AppState, GamePhase};
+use crate::states::{Action, AppState};
 
 const HUD_BG: Color = Color::srgba(0.06, 0.07, 0.09, 0.94);
 const BAR_BG: Color = Color::srgb(0.18, 0.20, 0.24);
@@ -158,15 +158,9 @@ pub fn spawn_hud(mut commands: Commands) {
                     },
                     TextColor(TEXT),
                 ))
-                .observe(
-                    |_: On<Activate>,
-                     phase: Res<State<GamePhase>>,
-                     mut next: ResMut<NextState<GamePhase>>| {
-                        if *phase.get() == GamePhase::Running {
-                            next.set(GamePhase::Paused);
-                        }
-                    },
-                );
+                .observe(|_: On<Activate>, mut actions: MessageWriter<Action>| {
+                    actions.write(Action::Pause);
+                });
         });
 }
 

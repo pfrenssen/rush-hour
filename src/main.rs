@@ -75,9 +75,6 @@ fn main() {
             1.0 / 60.0,
         )))
         .add_plugins(screenshot::ScreenshotPlugin { path, frames });
-        if args.level.is_none() {
-            app.insert_state(AppState::InGame);
-        }
     }
     app.run();
 }

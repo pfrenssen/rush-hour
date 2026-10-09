@@ -7,7 +7,8 @@ Usage: rush-hour [OPTIONS]
 
 Options:
   --level N            Start directly in level N (1-based)
-  --screenshot PATH    Run a level for --frames frames, save a PNG screenshot and exit
+  --screenshot PATH    Run for --frames frames, save a PNG screenshot and exit
+                       (shows the main menu unless --level is given)
   --frames F           Frames to run before the screenshot (default 600)
   -h, --help           Show this help
 ";

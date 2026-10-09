@@ -8,7 +8,7 @@ use crate::map::CityMap;
 use crate::map::graph::{HALF, NodeId};
 use crate::render::camera::MainCamera;
 use crate::sim::SimSpeed;
-use crate::states::{AppState, GamePhase};
+use crate::states::{Action, AppState, GamePhase};
 
 /// How far outside its box a junction still reacts to the mouse.
 const PICK_MARGIN: f32 = 4.0;
@@ -24,12 +24,11 @@ impl Plugin for InputPlugin {
         app.init_resource::<HoveredNode>()
             .add_systems(
                 Update,
-                (
-                    hover_and_click.run_if(in_state(GamePhase::Running)),
-                    pause_keys,
-                )
+                hover_and_click
+                    .run_if(in_state(GamePhase::Running))
                     .run_if(in_state(AppState::InGame)),
             )
+            .add_systems(Update, keys)
             .add_systems(OnExit(GamePhase::Running), clear_hover);
     }
 }
@@ -74,25 +73,67 @@ fn clear_hover(mut hovered: ResMut<HoveredNode>) {
     hovered.0 = None;
 }
 
-fn pause_keys(
+/// Keyboard shortcuts for every screen.
+pub fn keys(
     keys: Res<ButtonInput<KeyCode>>,
+    app_state: Res<State<AppState>>,
+    phase: Option<Res<State<GamePhase>>>,
     mut speed: ResMut<SimSpeed>,
-    phase: Res<State<GamePhase>>,
-    mut next_phase: ResMut<NextState<GamePhase>>,
-    mut next: ResMut<NextState<AppState>>,
+    mut actions: MessageWriter<Action>,
 ) {
-    if keys.any_just_pressed([KeyCode::Escape, KeyCode::KeyP]) {
-        match phase.get() {
-            GamePhase::Running => next_phase.set(GamePhase::Paused),
-            GamePhase::Paused => next_phase.set(GamePhase::Running),
-            GamePhase::LevelComplete | GamePhase::GameOver => {}
+    const LEVEL_KEYS: [KeyCode; 6] = [
+        KeyCode::Digit1,
+        KeyCode::Digit2,
+        KeyCode::Digit3,
+        KeyCode::Digit4,
+        KeyCode::Digit5,
+        KeyCode::Digit6,
+    ];
+    let pressed = |k: KeyCode| keys.just_pressed(k);
+    let confirm = pressed(KeyCode::Enter) || pressed(KeyCode::NumpadEnter);
+    let pause = pressed(KeyCode::Escape) || pressed(KeyCode::KeyP);
+    let action = match (app_state.get(), phase.map(|p| *p.get())) {
+        (AppState::Menu, _) => LEVEL_KEYS
+            .iter()
+            .position(|&k| pressed(k))
+            .filter(|&i| i < crate::levels::LEVELS.len())
+            .map(Action::Play)
+            .or(confirm.then_some(Action::Play(0))),
+        (AppState::InGame, Some(GamePhase::Running)) => {
+            if pressed(KeyCode::KeyF) || pressed(KeyCode::Tab) {
+                speed.toggle();
+            }
+            pause.then_some(Action::Pause)
         }
-    }
-    if keys.any_just_pressed([KeyCode::KeyF, KeyCode::Tab]) {
-        speed.toggle();
-    }
-    if *phase.get() == GamePhase::Paused && keys.just_pressed(KeyCode::KeyM) {
-        next.set(AppState::Menu);
+        (AppState::InGame, Some(GamePhase::Paused)) => {
+            if pause || confirm {
+                Some(Action::Resume)
+            } else if pressed(KeyCode::KeyR) {
+                Some(Action::Restart)
+            } else {
+                pressed(KeyCode::KeyM).then_some(Action::Menu)
+            }
+        }
+        (AppState::InGame, Some(GamePhase::LevelComplete)) => {
+            if confirm || pressed(KeyCode::KeyN) {
+                Some(Action::Next)
+            } else if pressed(KeyCode::KeyR) {
+                Some(Action::Restart)
+            } else {
+                pressed(KeyCode::KeyM).then_some(Action::Menu)
+            }
+        }
+        (AppState::InGame, Some(GamePhase::GameOver)) => {
+            if confirm || pressed(KeyCode::KeyR) {
+                Some(Action::Restart)
+            } else {
+                pressed(KeyCode::KeyM).then_some(Action::Menu)
+            }
+        }
+        (AppState::InGame, None) => None,
+    };
+    if let Some(action) = action {
+        actions.write(action);
     }
 }
 

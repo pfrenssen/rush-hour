@@ -1,11 +1,10 @@
-//! `--screenshot` mode: run a level for a fixed number of frames, save a PNG and exit.
+//! `--screenshot` mode: run a level (or the main menu, without `--level`) for a fixed number of
+//! frames, save a PNG and exit.
 
 use std::path::PathBuf;
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, ScreenshotCaptured, save_to_disk};
-
-use crate::states::AppState;
 
 #[derive(Resource)]
 struct ScreenshotPlan {
@@ -28,7 +27,7 @@ impl Plugin for ScreenshotPlugin {
             elapsed: 0,
             requested: false,
         })
-        .add_systems(Update, take_screenshot.run_if(in_state(AppState::InGame)));
+        .add_systems(Update, take_screenshot);
     }
 }
 

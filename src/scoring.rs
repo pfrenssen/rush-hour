@@ -147,6 +147,7 @@ pub struct Game {
     pub completed_at: Option<f32>,
     /// Simulated seconds at which the last life was lost.
     pub game_over_at: Option<f32>,
+    pub last_loss: Option<LossReason>,
 }
 
 /// Whether reaching the target or losing all lives ends the level (off for headless runs).
@@ -237,6 +238,7 @@ fn lose_lives(
     for (pos, reason) in hits {
         if game.lives.hit() {
             game.combo.reset();
+            game.last_loss = Some(reason);
             lost.write(LifeLost { pos, reason });
         }
     }
