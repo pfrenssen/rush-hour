@@ -1,4 +1,6 @@
+mod autopilot;
 mod cli;
+mod headless;
 mod input;
 mod levels;
 mod lights;
@@ -20,18 +22,33 @@ use bevy::window::{PresentMode, WindowResolution};
 use cli::{Mode, ParseOutcome};
 use states::AppState;
 
-fn main() {
+fn main() -> std::process::ExitCode {
     let args = match cli::parse(std::env::args().skip(1)) {
         Ok(ParseOutcome::Run(args)) => args,
         Ok(ParseOutcome::Help) => {
             print!("{}", cli::USAGE);
-            return;
+            return std::process::ExitCode::SUCCESS;
         }
         Err(e) => {
             eprintln!("error: {e}\n\n{}", cli::USAGE);
-            std::process::exit(2);
+            return std::process::ExitCode::from(2);
         }
     };
+
+    if let Mode::Headless { seconds } = args.mode {
+        return headless::run(
+            args.level.unwrap_or(0),
+            seconds,
+            args.seed.unwrap_or(1),
+            args.autopilot,
+        );
+    }
+    let seed = args.seed.unwrap_or_else(|| match args.mode {
+        Mode::Windowed => std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(1, |d| d.as_nanos() as u64),
+        _ => 1,
+    });
 
     let mut resolution = WindowResolution::new(1280, 720);
     let screenshot = matches!(args.mode, Mode::Screenshot { .. });
@@ -59,12 +76,14 @@ fn main() {
     }))
     .add_plugins((
         states::GameStatesPlugin,
-        sim::SimPlugin { seed: 1 },
+        sim::SimPlugin { seed },
+        autopilot::AutopilotPlugin,
         input::InputPlugin,
         render::GameRenderPlugin,
         ui::GameUiPlugin,
     ));
 
+    app.insert_resource(autopilot::Autopilot(args.autopilot));
     if let Some(level) = args.level {
         app.insert_resource(map::CurrentLevel(level))
             .insert_state(AppState::InGame);
@@ -76,5 +95,8 @@ fn main() {
         )))
         .add_plugins(screenshot::ScreenshotPlugin { path, frames });
     }
-    app.run();
+    match app.run() {
+        AppExit::Success => std::process::ExitCode::SUCCESS,
+        AppExit::Error(code) => std::process::ExitCode::from(code.get()),
+    }
 }

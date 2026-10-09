@@ -84,6 +84,17 @@ impl ShapeBuilder {
         self.convex(&outline, color);
     }
 
+    /// A thick polyline drawn as one quad per segment.
+    pub fn stroke(&mut self, points: &[Vec2], width: f32, color: Color) {
+        for w in points.windows(2) {
+            let d = w[1] - w[0];
+            let len = d.length();
+            if len > f32::EPSILON {
+                self.rotated_rect((w[0] + w[1]) / 2.0, Vec2::new(len, width), d / len, color);
+            }
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.indices.is_empty()
     }

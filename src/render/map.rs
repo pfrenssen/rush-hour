@@ -193,23 +193,29 @@ fn ripples(b: &mut ShapeBuilder, center: Vec2, rng: &mut fastrand::Rng) {
 }
 
 fn centre_dashes(b: &mut ShapeBuilder, grid: &Grid, col: usize, row: usize) {
+    let center = grid.cell_center(col, row);
     if grid.is_node(col, row) {
+        let open = grid.openings(col, row);
+        if open.len() == 2 {
+            bend_dashes(b, center, open[0], open[1]);
+        }
         return;
     }
-    let center = grid.cell_center(col, row);
     let along = match grid.cell(col, row) {
         Cell::RoadV => Vec2::Y,
         Cell::RoadH => Vec2::X,
         _ if grid.opens(col, row, Dir::N) => Vec2::Y,
         _ => Vec2::X,
     };
-    // Solid lines right next to a junction, dashes elsewhere.
-    let next_to_node = Dir::ALL.iter().any(|&d| {
+    // Solid lines right next to a signalled junction, dashes elsewhere.
+    let next_to_signal = Dir::ALL.iter().any(|&d| {
         let (dc, dr) = d.step();
         let (c, r) = (col as isize + dc, row as isize + dr);
-        grid.get(c, r).is_some() && grid.is_node(c as usize, r as usize)
+        grid.get(c, r).is_some()
+            && grid.is_node(c as usize, r as usize)
+            && grid.openings(c as usize, r as usize).len() >= 3
     });
-    if next_to_node {
+    if next_to_signal {
         b.rotated_rect(center, Vec2::new(TILE, 0.22), along, palette::MARKING);
     } else {
         for offset in [-2.0, 2.0] {
@@ -220,6 +226,25 @@ fn centre_dashes(b: &mut ShapeBuilder, grid: &Grid, col: usize, row: usize) {
                 palette::MARKING,
             );
         }
+    }
+}
+
+/// Dashed centre line curving through a bend between the openings `a` and `b`.
+fn bend_dashes(b: &mut ShapeBuilder, center: Vec2, a: Dir, c: Dir) {
+    let pivot = center + (a.vec() + c.vec()) * HALF;
+    let start = (-c.vec()).to_angle();
+    let mut sweep = (-a.vec()).to_angle() - start;
+    if sweep > std::f32::consts::PI {
+        sweep -= std::f32::consts::TAU;
+    } else if sweep < -std::f32::consts::PI {
+        sweep += std::f32::consts::TAU;
+    }
+    let point = |t: f32| pivot + HALF * Vec2::from_angle(start + sweep * t);
+    for (t0, t1) in [(0.16, 0.48), (0.52, 0.84)] {
+        let pts: Vec<Vec2> = (0..=4)
+            .map(|i| point(t0 + (t1 - t0) * i as f32 / 4.0))
+            .collect();
+        b.stroke(&pts, 0.22, palette::MARKING);
     }
 }
 
