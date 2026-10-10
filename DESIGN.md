@@ -26,6 +26,7 @@ src/
   scoring.rs     points, combo, lives (plain Rust) + ScoringPlugin
   autopilot.rs   built-in light controller
   sim.rs         SimPlugin: fixed timestep, system sets, seeded RNG, speed
+  sound.rs       synthesised siren and horns, and when to play them
   input.rs       mouse picking of junctions, keyboard shortcuts
   render/        camera, map meshes, lights, vehicles, effects
   ui/            HUD, menu, overlays
@@ -46,8 +47,8 @@ src/
   determines a headless run (there is a test for that).
 * **Vehicles are entities** carrying the plain `Vehicle` struct as a component. Rendering adds
   a transform and child meshes when a vehicle appears, so headless runs never pay for visuals.
-* Bevy is used with only its `2d` and `ui` feature sets. The single extra dependency is
-  `fastrand`.
+* Bevy is used with only its `2d` and `ui` feature sets plus `bevy_audio`. The single extra
+  dependency is `fastrand`.
 
 ## World and map
 
@@ -210,6 +211,13 @@ replay of earlier levels to reach a later one would only add friction.
   ambulances a red cross and blue/red beacons), headlights, brake lights that glow while
   braking or stopped, indicators that blink from 30 m before a turn until it is done.
 * The camera fits the whole map below the 60 px HUD and refits on every resize.
+* Sound effects are synthesised at startup into in-memory clips played through a custom
+  `Decodable` source: a two-tone siren (587/440 Hz) when an ambulance enters, a two-blast car
+  horn or a deeper bus/truck horn when a driver's patience drops below 55 % and again below 25 %
+  (the same points where the honk bubble appears and starts pulsing); waiting ambulances sound
+  the siren instead. At most one horn starts every 0.3 s and at most three play at once, and
+  sirens are at least 1.5 s apart, so a jam stays audible without becoming a wall of noise.
+  Screenshot and headless runs are silent.
 * Feedback: score pop-ups at exits, a red flash and "-1 LIFE" when a life is lost, flashing life
   dots during the grace period, countdown markers at blocked entries, and a title card per level.
 
@@ -247,5 +255,5 @@ minute, so the player's switching clearly matters.
 * Vehicles never change their route once spawned, even when a junction ahead is jammed.
 * There is no protected left-turn phase; left turns rely on gaps and on clearing at amber.
 * Ambulances do not get priority from other traffic, only from the player.
-* No sound and no persistent high scores.
+* No music, no volume control and no persistent high scores.
 * The default Bevy font has a limited glyph set, so the UI sticks to plain ASCII.

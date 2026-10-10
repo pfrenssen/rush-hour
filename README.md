@@ -9,7 +9,8 @@ thing you control. Keep the traffic moving: drivers lose patience while they wai
 gives up, or an entry road stays blocked, you lose a life. Deliver enough vehicles to clear the
 level; six levels grow from two crossings to fourteen.
 
-Everything is drawn procedurally; there are no asset files.
+Everything is drawn and synthesised procedurally; there are no asset files. Ambulances announce
+themselves with a siren and impatient drivers honk.
 
 ## Running
 
@@ -18,7 +19,7 @@ cargo run --release
 ```
 
 Rust stable (edition 2024) is required. On Linux, Bevy needs the usual system libraries
-(`libudev`, `libxkbcommon`, X11 or Wayland and Vulkan drivers); see Bevy's
+(`libudev`, `libxkbcommon`, ALSA, X11 or Wayland and Vulkan drivers); see Bevy's
 [Linux dependencies](https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md).
 
 ## How to play
@@ -29,7 +30,7 @@ Rust stable (edition 2024) is required. On Linux, Bevy needs the usual system li
 * Drivers stop for amber and red when they can, left-turners wait for gaps in oncoming traffic
   (the first one waiting may clear the junction at amber), and nobody enters a junction without
   room on the far side.
-* Waiting drivers turn red and start honking. If a driver's patience runs out, or a spawn point
+* Waiting drivers turn red, show a honk bubble and honk (waiting ambulances sound their siren). If a driver's patience runs out, or a spawn point
   stays blocked for 8 s (watch for the red countdown at the map edge), you lose one of three
   lives.
 * Faster trips score more; a steady flow of deliveries builds a combo up to x4. Ambulances are

@@ -9,6 +9,7 @@ mod render;
 mod scoring;
 mod screenshot;
 mod sim;
+mod sound;
 mod states;
 mod ui;
 mod vehicles;
@@ -58,8 +59,13 @@ fn main() -> std::process::ExitCode {
         resolution = resolution.with_scale_factor_override(1.0);
     }
 
+    let mut plugins = DefaultPlugins.build();
+    if screenshot {
+        // Screenshot runs stay silent and never open the audio device.
+        plugins = plugins.disable::<bevy::audio::AudioPlugin>();
+    }
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+    app.add_plugins(plugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "Rush Hour".into(),
             resolution,
@@ -83,6 +89,9 @@ fn main() -> std::process::ExitCode {
         ui::GameUiPlugin,
     ));
 
+    if !screenshot {
+        app.add_plugins(sound::SoundPlugin);
+    }
     app.insert_resource(autopilot::Autopilot(args.autopilot));
     if let Some(level) = args.level {
         app.insert_resource(map::CurrentLevel(level))
