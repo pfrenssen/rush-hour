@@ -1,15 +1,14 @@
-//! Static map visuals: ground, roads, markings, buildings and trees.
+//! Static map visuals: ground, roads and markings; block contents come from [`super::blocks`].
 
 use bevy::prelude::*;
 
+use super::blocks::{self, SIDEWALK};
 use super::shapes::ShapeBuilder;
 use super::{palette, z};
 use crate::map::CityMap;
 use crate::map::graph::{EDGE_EXTENSION, HALF, LANE_OFFSET, LaneGraph, STOP_SETBACK};
 use crate::map::grid::{Cell, Dir, Grid, TILE};
 use crate::states::AppState;
-
-const SIDEWALK: f32 = 1.0;
 
 pub fn spawn_map(
     mut commands: Commands,
@@ -34,6 +33,7 @@ pub fn spawn_map(
     );
     ground.rect(Vec2::ZERO, size + Vec2::splat(0.6), palette::CURB);
 
+    let lots = blocks::plan_lots(grid, map.level as u64);
     for row in 0..grid.height {
         for col in 0..grid.width {
             let center = grid.cell_center(col, row);
@@ -44,12 +44,21 @@ pub fn spawn_map(
                 Cell::Block => {
                     ground.rect(center, tile, palette::LAWN);
                     sidewalks(&mut ground, grid, col, row);
-                    buildings(&mut shadows, &mut tops, center, &mut rng);
+                    if let Some(lot) = &lots[row * grid.width + col] {
+                        blocks::draw_lot(
+                            lot,
+                            center,
+                            &mut rng,
+                            &mut ground,
+                            &mut shadows,
+                            &mut tops,
+                        );
+                    }
                 }
                 Cell::Park => {
                     ground.rect(center, tile, palette::PARK);
                     sidewalks(&mut ground, grid, col, row);
-                    trees(&mut shadows, &mut tops, center, &mut rng);
+                    blocks::trees(&mut shadows, &mut tops, center, &mut rng);
                 }
                 Cell::Water => {
                     ground.rect(center, tile, palette::WATER);
@@ -105,84 +114,6 @@ fn sidewalks(b: &mut ShapeBuilder, grid: &Grid, col: usize, row: usize) {
             );
         }
     }
-}
-
-fn buildings(
-    shadows: &mut ShapeBuilder,
-    tops: &mut ShapeBuilder,
-    center: Vec2,
-    rng: &mut fastrand::Rng,
-) {
-    let roof = palette::ROOFS[rng.usize(..palette::ROOFS.len())];
-    let style = rng.u8(0..10);
-    let margin = SIDEWALK + 0.5;
-    let max = TILE - 2.0 * margin;
-    if style < 7 {
-        // One building.
-        let size = Vec2::new(rng.f32() * 1.6 + max - 1.6, rng.f32() * 1.6 + max - 1.6);
-        let slack = (Vec2::splat(max) - size) / 2.0;
-        let pos = center
-            + Vec2::new(
-                (rng.f32() * 2.0 - 1.0) * slack.x,
-                (rng.f32() * 2.0 - 1.0) * slack.y,
-            );
-        house(shadows, tops, pos, size, roof);
-    } else if style < 9 {
-        // Two narrow buildings side by side.
-        let vertical = rng.bool();
-        let (a, b) = if vertical {
-            (Vec2::new(0.0, max / 4.0), Vec2::new(0.0, -max / 4.0))
-        } else {
-            (Vec2::new(max / 4.0, 0.0), Vec2::new(-max / 4.0, 0.0))
-        };
-        let size = if vertical {
-            Vec2::new(max - 0.4, max / 2.0 - 0.3)
-        } else {
-            Vec2::new(max / 2.0 - 0.3, max - 0.4)
-        };
-        let roof2 = palette::ROOFS[rng.usize(..palette::ROOFS.len())];
-        house(shadows, tops, center + a, size, roof);
-        house(shadows, tops, center + b, size, roof2);
-    } else {
-        // A small yard with a tree.
-        tree(shadows, tops, center + Vec2::new(0.6, 0.4), 1.6);
-    }
-}
-
-fn house(shadows: &mut ShapeBuilder, tops: &mut ShapeBuilder, pos: Vec2, size: Vec2, roof: Color) {
-    shadows.rounded_rect(pos + Vec2::new(0.45, -0.45), size, 0.5, palette::SHADOW);
-    tops.rounded_rect(pos, size, 0.5, roof);
-    // A lighter ridge gives the flat roof some depth.
-    let ridge = if size.x > size.y {
-        Vec2::new(size.x * 0.7, size.y * 0.18)
-    } else {
-        Vec2::new(size.x * 0.18, size.y * 0.7)
-    };
-    tops.rounded_rect(pos, ridge, 0.2, roof.lighter(0.06));
-}
-
-fn trees(
-    shadows: &mut ShapeBuilder,
-    tops: &mut ShapeBuilder,
-    center: Vec2,
-    rng: &mut fastrand::Rng,
-) {
-    let n = rng.usize(2..=3);
-    for i in 0..n {
-        let angle = (i as f32 / n as f32 + rng.f32() * 0.2) * std::f32::consts::TAU;
-        let pos = center + Vec2::new(angle.cos(), angle.sin()) * (1.2 + rng.f32() * 0.6);
-        tree(shadows, tops, pos, 1.3 + rng.f32() * 0.5);
-    }
-}
-
-fn tree(shadows: &mut ShapeBuilder, tops: &mut ShapeBuilder, pos: Vec2, r: f32) {
-    shadows.circle(pos + Vec2::new(0.4, -0.4), r, palette::SHADOW);
-    tops.circle(pos, r, palette::TREE);
-    tops.circle(
-        pos + Vec2::new(-0.25, 0.25) * r,
-        r * 0.55,
-        palette::TREE_LIGHT,
-    );
 }
 
 fn ripples(b: &mut ShapeBuilder, center: Vec2, rng: &mut fastrand::Rng) {

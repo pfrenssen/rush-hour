@@ -196,7 +196,13 @@ replay of earlier levels to reach a later one would only add friction.
 ## Presentation
 
 * The map is a handful of vertex-coloured meshes (ground, markings, shadows, buildings) built
-  from the grid, with deterministic per-cell variation of buildings and trees.
+  from the grid, with deterministic per-cell variation.
+* *Decision — perimeter blocks:* houses only stand on block cells that touch a road and face
+  that road (row houses along a street, a corner house where two streets meet, back-to-back
+  houses in a block one cell deep). Block cells that touch no road are the inside of the block:
+  each connected inside area is either a garden (lawn, flower beds, bushes) or a small park
+  (trees), and most get a playground (slide, swings, sandbox or roundabout). Houses in the middle
+  of a block, with no street to reach them, looked wrong.
 * The camera uses `Hdr` and a bloom pass with a threshold of 1.0: only HDR colours (lit lamps,
   brake lights, ambulance beacons, indicators) glow, the flat map stays crisp.
 * Light heads sit on the corner to the right of each approach, red lamp nearest the junction.

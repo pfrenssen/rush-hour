@@ -1,5 +1,6 @@
 //! Everything that draws the world: camera, map, vehicles, lights and effects.
 
+pub mod blocks;
 pub mod camera;
 pub mod effects;
 pub mod lights;
@@ -32,6 +33,10 @@ pub mod palette {
     pub const FRAME: Color = Color::srgb(0.11, 0.12, 0.15);
     pub const LAWN: Color = Color::srgb(0.33, 0.52, 0.36);
     pub const PARK: Color = Color::srgb(0.37, 0.60, 0.38);
+    pub const GARDEN: Color = Color::srgb(0.40, 0.62, 0.40);
+    pub const SOIL: Color = Color::srgb(0.45, 0.33, 0.24);
+    pub const BUSH: Color = Color::srgb(0.22, 0.47, 0.27);
+    pub const SAND: Color = Color::srgb(0.88, 0.80, 0.60);
     pub const WATER: Color = Color::srgb(0.22, 0.45, 0.66);
     pub const RIPPLE: Color = Color::srgba(0.75, 0.88, 1.0, 0.35);
     pub const ASPHALT: Color = Color::srgb(0.20, 0.21, 0.24);
