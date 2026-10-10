@@ -172,7 +172,7 @@ Each vehicle also gets ±8 % personal speed variation and a random paint colour.
 | 2 | Twin Avenues | 28×14 | 4       | 35     | 20 → 34                  |
 | 3 | Old Town     | 32×16 | 6       | 45     | 26 → 42                  |
 | 4 | Riverside    | 34×17 | 9       | 55     | 30 → 48                  |
-| 5 | Uptown       | 38×19 | 11      | 65     | 34 → 54                  |
+| 5 | Uptown       | 38×19 | 11      | 65     | 32 → 52                  |
 | 6 | Rush Hour    | 40×21 | 14      | 80     | 38 → 60                  |
 
 The vehicle mix shifts from 88 % cars to more buses, trucks and ambulances. Later levels add

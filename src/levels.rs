@@ -162,7 +162,7 @@ pub const LEVELS: &[LevelDef] = &[
             ".....|........|........|..............",
         ],
         target: 65,
-        spawn_per_min: (34.0, 54.0),
+        spawn_per_min: (32.0, 52.0),
         mix: Mix {
             car: 0.74,
             bus: 0.10,
